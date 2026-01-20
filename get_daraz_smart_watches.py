@@ -1,47 +1,52 @@
-import time
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+class DarazSmartWatchFinder:
+    import time
+    import validators
+    from selenium import webdriver
+    from selenium.webdriver.chrome.service import Service
+    from webdriver_manager.chrome import ChromeDriverManager
+    from selenium.webdriver.common.by import By
+    
+    driver = None
+    _url = None
 
-page=1
-max_page=5
+    def __init__(self, url):
+        #check if url is valid structure
+        if not self.validators.url(url):
+            raise ValueError("Invalid URL structure")
+        
+        self.driver = self.initialize_driver(url)
+        self._url = url
 
-driver.get("https://www.daraz.com.bd/catalog/?q=smart%20watch")
+    def get_product_divs(self):
+        product_item_divs = self.driver.find_elements(self.By.XPATH, '//div[@data-qa-locator="product-item"]')
+        return product_item_divs
 
-daraz_url = "https://www.daraz.com.bd/catalog/?q=smart%20watch"+"&page=" + str(page)
-
-time.sleep(5)
-
-# write method
-
-def GetProductUrlsAndWriteToFile():
-    while page <= max_page:
-        divs = GetProductUrlsFromPage()
-        GoToNextPage()
-        page += 1
-
-    divs = driver.find_elements(By.XPATH, '//div[@data-qa-locator="product-item"]')
-    for div in divs:
-        anchor_element = div.find_element(By.TAG_NAME, 'a')
-        product_url = anchor_element.get_attribute('href')
-        # write to file
-        with open('daraz_smart_watches_urls.txt', 'a') as f:
-            f.write(product_url + '\n')
-    return divs
-
-def GoToNextPage():
-    driver.find_element(By.XPATH, '//a[@data-qa-locator="pagination-next"]').click()
-    time.sleep(5)
+    def write_product_urls_to_file(self, product_item_divs):
+        self.GetPageCount()
+        for div in product_item_divs:
+            anchor_element = div.find_element(self.By.TAG_NAME, 'a')
+            product_url = anchor_element.get_attribute('href')
+            # write to file
+            with open('daraz_smart_watches_urls.txt', 'a') as f:
+                f.write(product_url + '\n')
 
 
-# Get all page count
+    def initialize_driver(self, url):
+        self.driver = self.webdriver.Chrome(service=self.Service(self.ChromeDriverManager().install()))
+        self.driver.get(url)
+        self.time.sleep(5)
+        return self.driver
 
-
-# Go go next page 
-driver.find_element(By.XPATH, '//a[@data-qa-locator="pagination-next"]').click()
-driver.find_element(By.XPATH,) '//a[@data-qa-locator="pagination-next"]').click()
-
-time.sleep(5)
-driver.quit()
+    def GetPageCount(self):
+        elements = self.driver.find_elements(
+            self.By.CSS_SELECTOR,
+            "li.ant-pagination-item a"
+        )
+        pages = [
+            int(el.text)
+            for el in elements
+            if el.text.isdigit()
+        ]
+        max_page = max(pages)
+        print(max_page)
+        return max_page
